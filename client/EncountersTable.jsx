@@ -69,7 +69,7 @@ flattenEncounter = function(encounter){
   result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
   result.typeCode = get(encounter, 'type[0].coding[0].code', '');
   result.typeDisplay = get(encounter, 'type[0].coding[0].display', '');
-  result.classCocde = get(encounter, 'class.code', '');
+  result.classCode = get(encounter, 'class.code', '');
 
   let statusHistory = get(encounter, 'statusHistory', []);
 

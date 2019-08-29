@@ -129,7 +129,7 @@ export class EncounterDetail extends React.Component {
   }
 
   renderDatePicker(displayDatePicker, effectiveDateTime){
-    console.log('renderDatePicker', displayDatePicker, effectiveDateTime)
+    //console.log('renderDatePicker', displayDatePicker, effectiveDateTime)
     if(typeof effectiveDateTime === "string"){
       effectiveDateTime = moment(effectiveDateTime);
     }
@@ -155,7 +155,7 @@ export class EncounterDetail extends React.Component {
     }
   }
   render() {
-    console.log('EncounterDetail.render()', this.state)
+    // console.log('EncounterDetail.render()', this.state)
     //let formData = this.state.form;
 
     var patientInputs;

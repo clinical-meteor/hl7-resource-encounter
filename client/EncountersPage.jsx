@@ -45,11 +45,11 @@ export class EncountersPage extends React.Component {
       selectedEncounter: false,
       selected: [],
       encounters: [],
-      encountersTableQuery: {}
+      query: {}
     };
 
     if(Session.get('encountersTableQuery')){
-      data.encountersTableQuery = Session.get('encountersTableQuery')
+      data.query = Session.get('encountersTableQuery')
     }
 
     // number of items in the table should be set globally
@@ -67,7 +67,7 @@ export class EncountersPage extends React.Component {
       this.state.encounter = {}
     }
 
-    data.encounters = Encounters.find().fetch();
+    data.encounters = Encounters.find(data.query).fetch();
 
     data.style = Glass.blur(data.style);
     data.style.appbar = Glass.darkroom(data.style.appbar);
