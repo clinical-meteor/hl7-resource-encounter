@@ -1,6 +1,6 @@
 Package.describe({
   name: 'clinical:hl7-resource-encounter',
-  version: '1.2.6',
+  version: '1.2.7',
   summary: 'HL7 FHIR Resource - Encounter',
   git: 'https://github.com/clinical-meteor/hl7-resource-encounter',
   documentation: 'README.md'
