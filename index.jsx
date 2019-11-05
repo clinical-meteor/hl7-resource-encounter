@@ -1,9 +1,11 @@
-
+import React from 'react';
 
 import EncountersPage from './client/EncountersPage';
 import EncountersTable from './client/EncountersTable';
 import EncounterDetail from './client/EncounterDetail';
 import { Encounter, Encounters, EncounterSchema } from './lib/Encounters';
+
+import { FaHospitalAlt } from 'react-icons/fa';
 
 var DynamicRoutes = [{
   'name': 'EncountersPage',
@@ -13,9 +15,10 @@ var DynamicRoutes = [{
 }];
 
 var SidebarElements = [{
-  'primaryText': 'EncountersPage',
+  'primaryText': 'Encounters',
   'to': '/encounters',
-  'href': '/encounters'
+  'href': '/encounters',
+  'icon': <FaHospitalAlt />
 }];
 
 export { 

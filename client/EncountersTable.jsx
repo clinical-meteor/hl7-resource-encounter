@@ -1,13 +1,24 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { CardText, Checkbox } from 'material-ui';
-import { Table } from 'react-bootstrap';
+import { 
+  CssBaseline,
+  Grid, 
+  Container,
+  Divider,
+  Card,
+  CardHeader,
+  CardContent,
+  Tab, 
+  Tabs,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow
+} from '@material-ui/core';
 
-// import ReactMixin from 'react-mixin';
-// import { ReactMeteorData } from 'meteor/react-meteor-data';
-// import { Session } from 'meteor/session';
-// import { GlassCard, VerticalCanvas, Glass, DynamicSpacer } from 'meteor/clinical:glass-ui';
+import TableNoData from 'material-fhir-ui'
 
 import moment from 'moment-es6'
 import _ from 'lodash';
@@ -17,6 +28,18 @@ let set = _.set;
 import { FaTags, FaCode, FaPuzzlePiece, FaLock  } from 'react-icons/fa';
 import { GoTrashcan } from 'react-icons/go';
 
+import { ThemeProvider, makeStyles } from '@material-ui/styles';
+const useStyles = makeStyles(theme => ({
+  button: {
+    background: theme.background,
+    border: 0,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: theme.buttonText,
+    height: 48,
+    padding: '0 30px',
+  }
+}));
 
 let styles = {
   hideOnPhone: {
@@ -86,61 +109,70 @@ flattenEncounter = function(encounter){
 
 
 
-export class EncountersTable extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selected: [],
-      encounters: []
-    }
-  }
-  getMeteorData() {
+// export class EncountersTable extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       selected: [],
+//       encounters: []
+//     }
+//   }
+//   getMeteorData() {
 
-    // this should all be handled by props
-    // or a mixin!
-    let data = {
-      style: {
-        text: Glass.darkroom()
-      },
-      selected: [],
-      encounters: []
-    };
-
-
-    if(this.props.data){
-      console.log('this.props.data', this.props.data);
-
-      if(this.props.data.length > 0){              
-        this.props.data.forEach(function(encounter){
-          data.encounters.push(flattenEncounter(encounter));
-        });  
-      }
-    } else {
-      let query = {};
-      if(this.props.query){
-        query = this.props.query
-      }
-      if(this.props.hideEnteredInError){
-        query['verificationStatus'] = {
-          $nin: ['entered-in-error']  // unconfirmed | provisional | differential | confirmed | refuted | entered-in-error
-        }
-      }
-
-      data.encounters = Encounters.find(query).map(function(encounter){
-        return flattenEncounter(encounter);
-      });
-    }
+//     // this should all be handled by props
+//     // or a mixin!
+//     let data = {
+//       style: {
+//         text: Glass.darkroom()
+//       },
+//       selected: [],
+//       encounters: []
+//     };
 
 
-    if(process.env.NODE_ENV === "test") console.log("EncountersTable[data]", data);
-    return data;
-  }
-  handleChange(row, key, value) {
+//     if(props.data){
+//       console.log('props.data', props.data);
+
+//       if(props.data.length > 0){              
+//         props.data.forEach(function(encounter){
+//           data.encounters.push(flattenEncounter(encounter));
+//         });  
+//       }
+//     } else {
+//       let query = {};
+//       if(props.query){
+//         query = props.query
+//       }
+//       if(props.hideEnteredInError){
+//         query['verificationStatus'] = {
+//           $nin: ['entered-in-error']  // unconfirmed | provisional | differential | confirmed | refuted | entered-in-error
+//         }
+//       }
+
+//       data.encounters = Encounters.find(query).map(function(encounter){
+//         return flattenEncounter(encounter);
+//       });
+//     }
+
+
+//     if(process.env.NODE_ENV === "test") console.log("EncountersTable[data]", data);
+//     return data;
+//   }
+
+
+
+
+function EncountersTable(props){
+
+  const classes = useStyles();
+
+
+  function handleChange(row, key, value) {
     const source = this.state.source;
     source[row][key] = value;
     this.setState({source});
   }
-  displayOnMobile(width){
+  function displayOnMobile(width){
     let style = {};
     if(['iPhone'].includes(window.navigator.platform)){
       style.display = "none";
@@ -150,29 +182,29 @@ export class EncountersTable extends React.Component {
     }
     return style;
   }
-  handleSelect(selected) {
+  function handleSelect(selected) {
     this.setState({selected});
   }
-  getDate(){
+  function getDate(){
     return "YYYY/MM/DD";
   }
-  noChange(){
+  function noChange(){
     return "";
   }
-  rowClick(id){
+  function rowClick(id){
     Session.set("selectedEncounterId", id);
     Session.set('encounterPageTabIndex', 2);
     Session.set('encounterDetailState', false);
   }
-  renderActionIconsHeader(){
-    if (!this.props.hideActionIcons) {
+  function renderActionIconsHeader(){
+    if (!props.hideActionIcons) {
       return (
-        <th className='actionIcons' style={{width: '100px'}}>Actions</th>
+        <TableCell className='actionIcons' style={{width: '100px'}}>Actions</TableCell>
       );
     }
   }
-  renderActionIcons(encounter ){
-    if (!this.props.hideActionIcons) {
+  function renderActionIcons(encounter ){
+    if (!props.hideActionIcons) {
       let iconStyle = {
         marginLeft: '4px', 
         marginRight: '4px', 
@@ -181,276 +213,261 @@ export class EncountersTable extends React.Component {
       }
 
       return (
-        <td className='actionIcons' style={{minWidth: '120px'}}>
+        <TableCell className='actionIcons' style={{minWidth: '120px'}}>
           <FaTags style={iconStyle} onClick={this.onMetaClick.bind(this, encounter)} />
           <GoTrashcan style={iconStyle} onClick={this.removeRecord.bind(this, encounter._id)} />  
-        </td>
+        </TableCell>
       );
     }
   } 
-  removeRecord(_id){
+  function removeRecord(_id){
     console.log('Remove encounter ', _id)
-    if(this.props.onRemoveRecord){
-      this.props.onRemoveRecord(_id);
+    if(props.onRemoveRecord){
+      props.onRemoveRecord(_id);
     }
   }
-  onActionButtonClick(id){
-    if(typeof this.props.onActionButtonClick === "function"){
-      this.props.onActionButtonClick(id);
+  function onActionButtonClick(id){
+    if(typeof props.onActionButtonClick === "function"){
+      props.onActionButtonClick(id);
     }
   }
-  cellClick(id){
-    if(typeof this.props.onCellClick === "function"){
-      this.props.onCellClick(id);
+  function cellClick(id){
+    if(typeof props.onCellClick === "function"){
+      props.onCellClick(id);
     }
   }
 
-  onMetaClick(patient){
+  function onMetaClick(patient){
     let self = this;
-    if(this.props.onMetaClick){
-      this.props.onMetaClick(self, patient);
+    if(props.onMetaClick){
+      props.onMetaClick(self, patient);
     }
   }
-  renderBarcode(id){
-    if (!this.props.hideIdentifier) {
+  function renderBarcode(id){
+    if (!props.hideIdentifier) {
       return (
-        <td><span className="barcode">{id}</span></td>
+        <TableCell><span className="barcode">{id}</span></TableCell>
       );
     }
   }
-  renderBarcodeHeader(){
-    if (!this.props.hideIdentifier) {
+  function renderBarcodeHeader(){
+    if (!props.hideIdentifier) {
       return (
-        <th>System ID</th>
+        <TableCell>System ID</TableCell>
       );
     }
   }
-  renderSubject(id){
-    if (!this.props.hideSubjects) {
+  function renderSubject(id){
+    if (!props.hideSubjects) {
       return (
-        <td className='name'>{ id }</td>
+        <TableCell className='name'>{ id }</TableCell>
       );
     }
   }
-  renderSubjectHeader(){
-    if (!this.props.hideSubjects) {
+  function renderSubjectHeader(){
+    if (!props.hideSubjects) {
       return (
-        <th className='name'>Subject</th>
+        <TableCell className='name'>Subject</TableCell>
       );
     }
   }
-  renderDevice(device){
-    if (!this.props.hideDevices) {
+  function renderDevice(device){
+    if (!props.hideDevices) {
       return (
-        <td className='device.display'>{device }</td>
+        <TableCell className='device.display'>{device }</TableCell>
       );
     }
   }
-  renderDeviceHeader(){
-    if (!this.props.hideDevices) {
+  function renderDeviceHeader(){
+    if (!props.hideDevices) {
       return (
-        <th className='device.display'>Device</th>
-      );
-    }
-  }
-
-  renderStatus(valueString){
-    if (!this.props.hideValue) {
-      return (
-        <td className='value'>{ valueString }</td>
-      );
-    }
-  }
-  renderStatusHeader(){
-    if (!this.props.hideValue) {
-      return (
-        <th className='value'>Value</th>
+        <TableCell className='device.display'>Device</TableCell>
       );
     }
   }
 
-  renderCodeHeader(){
-    if (!this.props.hideCode) {
+  function renderStatus(valueString){
+    if (!props.hideValue) {
       return (
-        <th className='code'>Code</th>
+        <TableCell className='value'>{ valueString }</TableCell>
       );
     }
   }
-  renderCode(code, value){
-    if (!this.props.hideCode) {
-      if(this.props.multiline){
-        return (<td className='code'>
+  function renderStatusHeader(){
+    if (!props.hideValue) {
+      return (
+        <TableCell className='value'>Value</TableCell>
+      );
+    }
+  }
+
+  function renderCodeHeader(){
+    if (!props.hideCode) {
+      return (
+        <TableCell className='code'>Code</TableCell>
+      );
+    }
+  }
+  function renderCode(code, value){
+    if (!props.hideCode) {
+      if(props.multiline){
+        return (<TableCell className='code'>
           <span style={{fontWeight: 400}}>{code }</span> <br />
           { value }
-        </td>)
+        </TableCell>)
       } else {
         return (
-          <td className='category'>{ code }</td>
+          <TableCell className='category'>{ code }</TableCell>
         );  
       }
     }
   }
-  renderCategoryHeader(){
-    if (this.props.multiline === false) {
+  function renderCategoryHeader(){
+    if (props.multiline === false) {
       return (
-        <th className='category'>Category</th>
+        <TableCell className='category'>Category</TableCell>
       );
     }
   }
-  renderCategory(category){
-    if (this.props.multiline === false) {
+  function renderCategory(category){
+    if (props.multiline === false) {
       return (
-        <td className='category'>{ category }</td>
+        <TableCell className='category'>{ category }</TableCell>
       );
     }
   }
 
-  renderStatusString(valueString){
-    if (!this.props.hideValue) {
+  function renderStatusString(valueString){
+    if (!props.hideValue) {
       return (
-        <td className='value'>{ valueString }</td>
+        <TableCell className='value'>{ valueString }</TableCell>
       );
     }
   }
-  renderStatusStringHeader(){
-    if (!this.props.hideValue) {
+  function renderStatusStringHeader(){
+    if (!props.hideValue) {
       return (
-        <th className='value'>Value</th>
+        <TableCell className='value'>Value</TableCell>
       );
     }
   }
-  renderComparator(comparator){
-    if (!this.props.hideComparator) {
+  function renderComparator(comparator){
+    if (!props.hideComparator) {
       return (
-        <td className='comparator'>{ comparator }</td>
+        <TableCell className='comparator'>{ comparator }</TableCell>
       );
     }
   }
-  renderComparatorHeader(){
-    if (!this.props.hideComparator) {
+  function renderComparatorHeader(){
+    if (!props.hideComparator) {
       return (
-        <th className='comparator'>Comparator</th>
+        <TableCell className='comparator'>Comparator</TableCell>
         );
     }
   }
-  renderToggleHeader(){
-    if (!this.props.hideCheckboxes) {
+  function renderToggleHeader(){
+    if (!props.hideCheckboxes) {
       return (
-        <th className="toggle" style={{width: '60px'}} >Toggle</th>
+        <TableCell className="toggle" style={{width: '60px'}} >Toggle</TableCell>
       );
     }
   }
-  renderToggle(){
-    if (!this.props.hideCheckboxes) {
+  function renderToggle(){
+    if (!props.hideCheckboxes) {
       return (
-        <td className="toggle" style={{width: '60px'}}>
+        <TableCell className="toggle" style={{width: '60px'}}>
             <Checkbox
               defaultChecked={true}
             />
-          </td>
+        </TableCell>
       );
     }
   }
 
-  render () {
-    let tableRows = [];
-    let footer;
 
-    if(this.props.appWidth){
-      if (this.props.appWidth < 768) {
-        styles.hideOnPhone.visibility = 'hidden';
-        styles.hideOnPhone.display = 'none';
-        styles.cellHideOnPhone.visibility = 'hidden';
-        styles.cellHideOnPhone.display = 'none';
-      } else {
-        styles.hideOnPhone.visibility = 'visible';
-        styles.hideOnPhone.display = 'table-cell';
-        styles.cellHideOnPhone.visibility = 'visible';
-        styles.cellHideOnPhone.display = 'table-cell';
-      }  
+
+
+
+  let tableRows = [];
+  let encountersToRender = [];
+  if(props.encounters){
+    if(props.encounters.length > 0){              
+      props.encounters.forEach(function(encounter){
+        encountersToRender.push(flattenEncounter(encounter));
+      });  
     }
-
-    let encountersToRender = [];
-    if(this.props.encounters){
-      if(this.props.encounters.length > 0){              
-        this.props.encounters.forEach(function(encounter){
-          encountersToRender.push(flattenEncounter(encounter));
-        });  
-      }
-    }
-
-    if(encountersToRender.length === 0){
-      console.log('No encounters to render');
-      // footer = <TableNoData noDataPadding={ this.props.noDataMessagePadding } />
-    } else {
-      for (var i = 0; i < encountersToRender.length; i++) {
-        if(this.props.multiline){
-          tableRows.push(
-            <tr className="encounterRow" key={i} onClick={ this.rowClick.bind(this, encountersToRender[i]._id)} >
-              { this.renderToggle() }
-              { this.renderActionIcons(encountersToRender[i]) }
-              {this.renderSubject(encountersToRender[i].subject)}
-              <td className='classCode' >{encountersToRender[i].classCode }</td>
-              <td className='typeCode' >{encountersToRender[i].typeCode }</td>
-              <td className='typeDisplay' >{encountersToRender[i].typeDisplay }</td>
-              <td className='reasonCode' >{encountersToRender[i].reasonCode }</td>
-              <td className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</td>
-              <td className='status' >{encountersToRender[i].status }</td>
-              <td className='statusHistory' >{encountersToRender[i].statusHistory }</td>
-              <td className='periodStart' style={{minWidth: '140px'}}>{encountersToRender[i].periodStart }</td>
-              <td className='periodEnd' style={{minWidth: '140px'}}>{encountersToRender[i].periodEnd }</td>
-              {this.renderBarcode(encountersToRender[i]._id)}
-            </tr>
-          );    
-  
-        } else {
-          tableRows.push(
-            <tr className="encounterRow" key={i} onClick={ this.rowClick.bind(this, encountersToRender[i]._id)} >            
-              { this.renderToggle() }
-              { this.renderActionIcons(encountersToRender[i]) }
-              {this.renderSubject(encountersToRender[i].subject)}
-              <td className='classCode' >{encountersToRender[i].classCode }</td>
-              <td className='typeCode' >{encountersToRender[i].typeCode }</td>
-              <td className='typeDisplay' >{encountersToRender[i].typeDisplay }</td>
-              <td className='reasonCode' >{encountersToRender[i].reasonCode }</td>
-              <td className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</td>
-              <td className='status' >{encountersToRender[i].status }</td>
-              <td className='statusHistory' >{encountersToRender[i].statusHistory }</td>
-              <td className='periodStart' style={{minWidth: '140px'}}>{encountersToRender[i].periodStart }</td>
-              <td className='periodEnd' style={{minWidth: '140px'}}>{encountersToRender[i].periodEnd }</td>
-              {this.renderBarcode(encountersToRender[i]._id)}
-            </tr>
-          );    
-        }
-      }
-    }
-
-
-    return(
-        <Table id="encountersTable" hover >
-          <thead>
-            <tr>
-              { this.renderToggleHeader() }
-              { this.renderActionIconsHeader() }
-              {this.renderSubjectHeader() }
-              <th className='classCode'>Class</th>
-              <th className='typeCode'>Type Code</th>
-              <th className='typeDisplay'>Type</th>
-              <th className='reasonCode'>Reason Code</th>
-              <th className='reasonDisplay'>Reason</th>
-              <th className='status'>Status</th>
-              <th className='statusHistory'>History</th>
-              <th className='start' style={{minWidth: '140px'}}>Start</th>
-              <th className='end' style={{minWidth: '140px'}}>End</th>
-              {this.renderBarcodeHeader() }
-            </tr>
-          </thead>
-          <tbody>
-            { tableRows }
-          </tbody>
-        </Table>
-    );
   }
+
+  if(encountersToRender.length === 0){
+    console.log('No encounters to render');
+    // footer = <TableNoData noDataPadding={ props.noDataMessagePadding } />
+  } else {
+    for (var i = 0; i < encountersToRender.length; i++) {
+      if(props.multiline){
+        tableRows.push(
+          <TableRow className="encounterRow" key={i} onClick={ rowClick(encountersToRender[i]._id)} >
+            { renderToggle() }
+            { renderActionIcons(encountersToRender[i]) }
+            { renderSubject(encountersToRender[i].subject)}
+            <TableCell className='classCode' >{encountersToRender[i].classCode }</TableCell>
+            <TableCell className='typeCode' >{encountersToRender[i].typeCode }</TableCell>
+            <TableCell className='typeDisplay' >{encountersToRender[i].typeDisplay }</TableCell>
+            <TableCell className='reasonCode' >{encountersToRender[i].reasonCode }</TableCell>
+            <TableCell className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</TableCell>
+            <TableCell className='status' >{encountersToRender[i].status }</TableCell>
+            <TableCell className='statusHistory' >{encountersToRender[i].statusHistory }</TableCell>
+            <TableCell className='periodStart' style={{minWidth: '140px'}}>{encountersToRender[i].periodStart }</TableCell>
+            <TableCell className='periodEnd' style={{minWidth: '140px'}}>{encountersToRender[i].periodEnd }</TableCell>
+            { renderBarcode(encountersToRender[i]._id)}
+          </TableRow>
+        );    
+
+      } else {
+        tableRows.push(
+          <TableRow className="encounterRow" key={i} onClick={ rowClick(encountersToRender[i]._id)} >            
+            { renderToggle() }
+            { renderActionIcons(encountersToRender[i]) }
+            { renderSubject(encountersToRender[i].subject)}
+            <TableCell className='classCode' >{ encountersToRender[i].classCode }</TableCell>
+            <TableCell className='typeCode' >{ encountersToRender[i].typeCode }</TableCell>
+            <TableCell className='typeDisplay' >{ encountersToRender[i].typeDisplay }</TableCell>
+            <TableCell className='reasonCode' >{ encountersToRender[i].reasonCode }</TableCell>
+            <TableCell className='reasonDisplay' >{ encountersToRender[i].reasonDisplay }</TableCell>
+            <TableCell className='status' >{ encountersToRender[i].status }</TableCell>
+            <TableCell className='statusHistory' >{ encountersToRender[i].statusHistory }</TableCell>
+            <TableCell className='periodStart' style={{minWidth: '140px'}}>{ encountersToRender[i].periodStart }</TableCell>
+            <TableCell className='periodEnd' style={{minWidth: '140px'}}>{ encountersToRender[i].periodEnd }</TableCell>
+            { renderBarcode(encountersToRender[i]._id)}
+          </TableRow>
+        );    
+      }
+    }
+  }
+
+  return(
+    <Table size="small" aria-label="a dense table">
+      <TableHead>
+        <TableRow>
+          { renderToggleHeader() }
+          { renderActionIconsHeader() }
+          { renderSubjectHeader() }
+          <TableCell className='classCode'>Class</TableCell>
+          <TableCell className='typeCode'>TypeCode</TableCell>
+          <TableCell className='typeDisplay'>Type</TableCell>
+          <TableCell className='reasonCode'>ReasonCode</TableCell>
+          <TableCell className='reasonDisplay'>Reason</TableCell>
+          <TableCell className='status'>Status</TableCell>
+          <TableCell className='statusHistory'>History</TableCell>
+          <TableCell className='start' style={{minWidth: '140px'}}>Start</TableCell>
+          <TableCell className='end' style={{minWidth: '140px'}}>End</TableCell>
+          { renderBarcodeHeader() }
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        { tableRows }
+      </TableBody>
+    </Table>
+  );
 }
 
 EncountersTable.propTypes = {

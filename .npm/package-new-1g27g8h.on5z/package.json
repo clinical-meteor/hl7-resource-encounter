@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "material-fhir-ui": "0.7.6",
+    "moment": "^2.22.2",
+    "react-icons": "3.8.0",
+    "simpl-schema": "^1.5.3",
+    "validator": "^10.9.0"
+  }
+}
