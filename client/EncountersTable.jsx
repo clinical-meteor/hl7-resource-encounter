@@ -18,7 +18,7 @@ import {
   TableRow
 } from '@material-ui/core';
 
-import TableNoData from 'material-fhir-ui'
+import TableNoData from 'material-fhir-ui';
 
 import moment from 'moment-es6'
 import _ from 'lodash';
@@ -107,8 +107,6 @@ flattenEncounter = function(encounter){
 }
 
 
-
-
 // export class EncountersTable extends React.Component {
 //   constructor(props) {
 //     super(props);
@@ -128,7 +126,6 @@ flattenEncounter = function(encounter){
 //       selected: [],
 //       encounters: []
 //     };
-
 
 //     if(props.data){
 //       console.log('props.data', props.data);
@@ -154,7 +151,6 @@ flattenEncounter = function(encounter){
 //       });
 //     }
 
-
 //     if(process.env.NODE_ENV === "test") console.log("EncountersTable[data]", data);
 //     return data;
 //   }
@@ -163,9 +159,10 @@ flattenEncounter = function(encounter){
 
 
 function EncountersTable(props){
+  console.log('EncountersTable.props', props);
+  // console.log('EncountersTable.props.encounters', props.encounters);
 
   const classes = useStyles();
-
 
   function handleChange(row, key, value) {
     const source = this.state.source;
@@ -193,7 +190,7 @@ function EncountersTable(props){
   }
   function rowClick(id){
     Session.set("selectedEncounterId", id);
-    Session.set('encounterPageTabIndex', 2);
+    Session.set('encounterPageTabIndex', 1);
     Session.set('encounterDetailState', false);
   }
   function renderActionIconsHeader(){
@@ -214,8 +211,8 @@ function EncountersTable(props){
 
       return (
         <TableCell className='actionIcons' style={{minWidth: '120px'}}>
-          <FaTags style={iconStyle} onClick={this.onMetaClick.bind(this, encounter)} />
-          <GoTrashcan style={iconStyle} onClick={this.removeRecord.bind(this, encounter._id)} />  
+          <FaTags style={iconStyle} onClick={ onMetaClick.bind(encounter)} />
+          <GoTrashcan style={iconStyle} onClick={ removeRecord.bind(encounter._id)} />  
         </TableCell>
       );
     }
@@ -271,55 +268,90 @@ function EncountersTable(props){
       );
     }
   }
-  function renderDevice(device){
-    if (!props.hideDevices) {
-      return (
-        <TableCell className='device.display'>{device }</TableCell>
-      );
-    }
-  }
-  function renderDeviceHeader(){
-    if (!props.hideDevices) {
-      return (
-        <TableCell className='device.display'>Device</TableCell>
-      );
-    }
-  }
-
   function renderStatus(valueString){
-    if (!props.hideValue) {
+    if (!props.hideStatus) {
       return (
         <TableCell className='value'>{ valueString }</TableCell>
       );
     }
   }
   function renderStatusHeader(){
-    if (!props.hideValue) {
+    if (!props.hideStatus) {
       return (
         <TableCell className='value'>Value</TableCell>
       );
     }
   }
 
-  function renderCodeHeader(){
-    if (!props.hideCode) {
+  function renderHistory(valueString){
+    if (!props.hideHistory) {
       return (
-        <TableCell className='code'>Code</TableCell>
+        <TableCell className='history'>{ valueString }</TableCell>
       );
     }
   }
-  function renderCode(code, value){
-    if (!props.hideCode) {
-      if(props.multiline){
-        return (<TableCell className='code'>
-          <span style={{fontWeight: 400}}>{code }</span> <br />
-          { value }
-        </TableCell>)
-      } else {
-        return (
-          <TableCell className='category'>{ code }</TableCell>
-        );  
-      }
+  function renderHistoryHeader(){
+    if (!props.hideHistory) {
+      return (
+        <TableCell className='history'>Value</TableCell>
+      );
+    }
+  }
+
+  function renderTypeCodeHeader(){
+    if (!props.hideTypeCode) {
+      return (
+        <TableCell className='typecode'>TypeCode</TableCell>
+      );
+    }
+  }
+  function renderTypeCode(code){
+    if (!props.hideTypeCode) {
+      return (
+        <TableCell className='typecode'>{ code }</TableCell>
+      );  
+    }
+  }
+  function renderClassCodeHeader(){
+    if (!props.hideClassCode) {
+      return (
+        <TableCell className='classcode'>Class</TableCell>
+      );
+    }
+  }
+  function renderClassCode(code){
+    if (!props.hideClassCode) {
+      return (
+        <TableCell className='classcode'>{ code }</TableCell>
+      );  
+    }
+  }
+  function renderReasonCodeHeader(){
+    if (!props.hideReasonCode) {
+      return (
+        <TableCell className='reasoncode'>ReasonCode</TableCell>
+      );
+    }
+  }
+  function renderReasonCode(code){
+    if (!props.hideReasonCode) {
+      return (
+        <TableCell className='reasoncode'>{ code }</TableCell>
+      );  
+    }
+  }
+  function renderReasonHeader(){
+    if (!props.hideReason) {
+      return (
+        <TableCell className='reason'>Reason</TableCell>
+      );
+    }
+  }
+  function renderReason(code){
+    if (!props.hideReason) {
+      return (
+        <TableCell className='reason'>{ code }</TableCell>
+      );  
     }
   }
   function renderCategoryHeader(){
@@ -336,35 +368,6 @@ function EncountersTable(props){
       );
     }
   }
-
-  function renderStatusString(valueString){
-    if (!props.hideValue) {
-      return (
-        <TableCell className='value'>{ valueString }</TableCell>
-      );
-    }
-  }
-  function renderStatusStringHeader(){
-    if (!props.hideValue) {
-      return (
-        <TableCell className='value'>Value</TableCell>
-      );
-    }
-  }
-  function renderComparator(comparator){
-    if (!props.hideComparator) {
-      return (
-        <TableCell className='comparator'>{ comparator }</TableCell>
-      );
-    }
-  }
-  function renderComparatorHeader(){
-    if (!props.hideComparator) {
-      return (
-        <TableCell className='comparator'>Comparator</TableCell>
-        );
-    }
-  }
   function renderToggleHeader(){
     if (!props.hideCheckboxes) {
       return (
@@ -376,15 +379,13 @@ function EncountersTable(props){
     if (!props.hideCheckboxes) {
       return (
         <TableCell className="toggle" style={{width: '60px'}}>
-            <Checkbox
+            {/* <Checkbox
               defaultChecked={true}
-            />
+            /> */}
         </TableCell>
       );
     }
   }
-
-
 
 
 
@@ -409,13 +410,21 @@ function EncountersTable(props){
             { renderToggle() }
             { renderActionIcons(encountersToRender[i]) }
             { renderSubject(encountersToRender[i].subject)}
-            <TableCell className='classCode' >{encountersToRender[i].classCode }</TableCell>
-            <TableCell className='typeCode' >{encountersToRender[i].typeCode }</TableCell>
+            { renderClassCode(encountersToRender[i].classCode) }
+            { renderTypeCode(encountersToRender[i].typeCode) }
+            {/* <TableCell className='classCode' >{encountersToRender[i].classCode }</TableCell> */}
+            {/* <TableCell className='typeCode' >{encountersToRender[i].typeCode }</TableCell> */}
             <TableCell className='typeDisplay' >{encountersToRender[i].typeDisplay }</TableCell>
-            <TableCell className='reasonCode' >{encountersToRender[i].reasonCode }</TableCell>
-            <TableCell className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</TableCell>
-            <TableCell className='status' >{encountersToRender[i].status }</TableCell>
-            <TableCell className='statusHistory' >{encountersToRender[i].statusHistory }</TableCell>
+            { renderReasonCode(encountersToRender[i].reasonCode)}
+            { renderReason(encountersToRender[i].reasonDisplay)}
+            {/* <TableCell className='reasonCode' >{encountersToRender[i].reasonCode }</TableCell>
+            <TableCell className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</TableCell> */}
+
+            { renderStatus(encountersToRender[i].status)}
+            { renderHistory(encountersToRender[i].statusHistory)}
+
+            {/* <TableCell className='status' >{encountersToRender[i].status }</TableCell>
+            <TableCell className='statusHistory' >{encountersToRender[i].statusHistory }</TableCell> */}
             <TableCell className='periodStart' style={{minWidth: '140px'}}>{encountersToRender[i].periodStart }</TableCell>
             <TableCell className='periodEnd' style={{minWidth: '140px'}}>{encountersToRender[i].periodEnd }</TableCell>
             { renderBarcode(encountersToRender[i]._id)}
@@ -424,17 +433,25 @@ function EncountersTable(props){
 
       } else {
         tableRows.push(
-          <TableRow className="encounterRow" key={i} onClick={ rowClick(encountersToRender[i]._id)} >            
+          <TableRow className="encounterRow" key={i} onClick={ rowClick.bind(encountersToRender[i]._id)} >            
             { renderToggle() }
             { renderActionIcons(encountersToRender[i]) }
             { renderSubject(encountersToRender[i].subject)}
-            <TableCell className='classCode' >{ encountersToRender[i].classCode }</TableCell>
-            <TableCell className='typeCode' >{ encountersToRender[i].typeCode }</TableCell>
+            { renderClassCode(encountersToRender[i].classCode) }
+            { renderTypeCode(encountersToRender[i].typeCode) }
+            {/* <TableCell className='classCode' >{ encountersToRender[i].classCode }</TableCell> */}
+            {/* <TableCell className='typeCode' >{ encountersToRender[i].typeCode }</TableCell> */}
             <TableCell className='typeDisplay' >{ encountersToRender[i].typeDisplay }</TableCell>
-            <TableCell className='reasonCode' >{ encountersToRender[i].reasonCode }</TableCell>
-            <TableCell className='reasonDisplay' >{ encountersToRender[i].reasonDisplay }</TableCell>
-            <TableCell className='status' >{ encountersToRender[i].status }</TableCell>
-            <TableCell className='statusHistory' >{ encountersToRender[i].statusHistory }</TableCell>
+            { renderReasonCode(encountersToRender[i].reasonCode)}
+            { renderReason(encountersToRender[i].reasonDisplay)}
+            {/* <TableCell className='reasonCode' >{ encountersToRender[i].reasonCode }</TableCell>
+            <TableCell className='reasonDisplay' >{ encountersToRender[i].reasonDisplay }</TableCell> */}
+
+            { renderStatus(encountersToRender[i].status)}
+            { renderHistory(encountersToRender[i].statusHistory)}
+
+            {/* <TableCell className='status' >{ encountersToRender[i].status }</TableCell>
+            <TableCell className='statusHistory' >{ encountersToRender[i].statusHistory }</TableCell> */}
             <TableCell className='periodStart' style={{minWidth: '140px'}}>{ encountersToRender[i].periodStart }</TableCell>
             <TableCell className='periodEnd' style={{minWidth: '140px'}}>{ encountersToRender[i].periodEnd }</TableCell>
             { renderBarcode(encountersToRender[i]._id)}
@@ -451,13 +468,21 @@ function EncountersTable(props){
           { renderToggleHeader() }
           { renderActionIconsHeader() }
           { renderSubjectHeader() }
-          <TableCell className='classCode'>Class</TableCell>
-          <TableCell className='typeCode'>TypeCode</TableCell>
+          { renderClassCodeHeader() }
+          { renderTypeCodeHeader() }
+          {/* <TableCell className='classCode'>Class</TableCell> */}
+          {/* <TableCell className='typeCode'>TypeCode</TableCell> */}
           <TableCell className='typeDisplay'>Type</TableCell>
-          <TableCell className='reasonCode'>ReasonCode</TableCell>
-          <TableCell className='reasonDisplay'>Reason</TableCell>
-          <TableCell className='status'>Status</TableCell>
-          <TableCell className='statusHistory'>History</TableCell>
+          { renderReasonCodeHeader() }
+          { renderReasonHeader() }
+          {/* <TableCell className='reasonCode'>ReasonCode</TableCell>
+          <TableCell className='reasonDisplay'>Reason</TableCell> */}
+
+          { renderStatusHeader() }
+          { renderHistoryHeader() }
+
+          {/* <TableCell className='status'>Status</TableCell>
+          <TableCell className='statusHistory'>History</TableCell> */}
           <TableCell className='start' style={{minWidth: '140px'}}>Start</TableCell>
           <TableCell className='end' style={{minWidth: '140px'}}>End</TableCell>
           { renderBarcodeHeader() }
@@ -475,15 +500,16 @@ EncountersTable.propTypes = {
   encounters: PropTypes.array,
   query: PropTypes.object,
   paginationLimit: PropTypes.number,
-  hideCode: PropTypes.bool,
-  hideIdentifier: PropTypes.bool,
+  hideClassCode: PropTypes.bool,
+  hideTypeCode: PropTypes.bool,
+  hideReason: PropTypes.bool,
+  hideReasonCode: PropTypes.bool,
   hideSubjects: PropTypes.bool,
-  hideDevices: PropTypes.bool,
-  hideComparator: PropTypes.bool,
-  hideValue: PropTypes.bool,
   hideCheckboxes: PropTypes.bool,
   hideActionIcons: PropTypes.bool,
   hideIdentifier: PropTypes.bool,
+  hideStatus: PropTypes.bool,
+  hideHistory: PropTypes.bool,
   enteredInError: PropTypes.bool,
   multiline: PropTypes.bool,
   onCellClick: PropTypes.func,

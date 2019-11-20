@@ -12,6 +12,7 @@ import {
   Typography,
   Box
 } from '@material-ui/core';
+import styled from 'styled-components';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -21,16 +22,17 @@ import ReactMixin  from 'react-mixin';
 
 import EncounterDetail from './EncounterDetail';
 import EncountersTable from './EncountersTable';
+import StyledCard from './StyledCard';
 
-import { get } from 'lodash';
+import { get, cloneDeep } from 'lodash';
 
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
-Session.setDefault('encounterPageTabIndex', 1);
+Session.setDefault('encounterPageTabIndex', 0);
 Session.setDefault('encounterSearchFilter', '');
 Session.setDefault('selectedEncounterId', false);
 Session.setDefault('fhirVersion', 'v1.0.2');
-
+Session.setDefault('encountersArray', []);
 
 // Global Theming 
   // This is necessary for the Material UI component render layer
@@ -101,6 +103,16 @@ Session.setDefault('fhirVersion', 'v1.0.2');
     }
   });
 
+// const StyledCard = styled(Card)`
+//   background: ` + theme.paperColor + `;
+//   border-radius: 3px;
+//   border: 0;
+//   color: ` + theme.paperTextColor + `;
+//   height: 48px;
+//   padding: 0 30px;
+//   box-shadow: 0 3px 5px 2px rgba(255, 105, 135, 0.3);
+// `;
+
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -120,6 +132,8 @@ function TabPanel(props) {
 }
 
 
+
+
 export class EncountersPage extends React.Component {
   constructor(props) {
     super(props);
@@ -130,51 +144,45 @@ export class EncountersPage extends React.Component {
   }
   getMeteorData() {
     let data = {
-      style: {
-        opacity: Session.get('globalOpacity'),
-        tab: {
-          borderBottom: '1px solid lightgray',
-          borderRight: 'none'
-        }
-      },
       tabIndex: Session.get('encounterPageTabIndex'),
       encounterSearchFilter: Session.get('encounterSearchFilter'),
       fhirVersion: Session.get('fhirVersion'),
       selectedEncounterId: Session.get("selectedEncounterId"),
-      paginationLimit: 100,
       selectedEncounter: false,
       selected: [],
       encounters: [],
       query: {},
+      options: {
+        limit: get(Meteor, 'settings.public.defaults.paginationLimit', 5)
+      },
       tabIndex: Session.get('encounterPageTabIndex')
     };
 
-    if(Session.get('encountersTableQuery')){
-      data.query = Session.get('encountersTableQuery')
-    }
+    // if(Session.get('encountersTableQuery')){
+    //   data.query = Session.get('encountersTableQuery')
+    // }
 
-    // number of items in the table should be set globally
-    if (get(Meteor, 'settings.public.defaults.paginationLimit')) {
-      data.paginationLimit = get(Meteor, 'settings.public.defaults.paginationLimit');
-    }
+    // if (Session.get('selectedEncounterId')){
+    //   data.selectedEncounter = Encounters.findOne({_id: Session.get('selectedEncounterId')});
+    //   this.state.encounter = Encounters.findOne({_id: Session.get('selectedEncounterId')});
+    //   this.state.encounterId = Session.get('selectedEncounterId');
+    // } else {
+    //   data.selectedEncounter = false;
+    //   this.state.encounterId = false;
+    //   this.state.encounter = {};
+    // }
 
-    if (Session.get('selectedEncounterId')){
-      data.selectedEncounter = Encounters.findOne({_id: Session.get('selectedEncounterId')});
-      this.state.encounter = Encounters.findOne({_id: Session.get('selectedEncounterId')});
-      this.state.encounterId = Session.get('selectedEncounterId');
-    } else {
-      data.selectedEncounter = false;
-      this.state.encounterId = false;
-      this.state.encounter = {}
-    }
+    console.log('EncountersPage.data.query', data.query)
+    console.log('EncountersPage.data.options', data.options)
 
-    data.encounters = Encounters.find(data.query).fetch();
+    data.encounters = Encounters.find(data.query, data.options).fetch();
+
 
     // data.style = Glass.blur(data.style);
     // data.style.appbar = Glass.darkroom(data.style.appbar);
     // data.style.tab = Glass.darkroom(data.style.tab);
 
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("EncountersPage[data]", data);
+    // console.log("EncountersPage[data]", data);
     return data;
   }
 
@@ -319,33 +327,40 @@ export class EncountersPage extends React.Component {
     Session.set('encounterPageTabIndex', 1);
   } 
   render() {
+    // console.log('EncountersPage.data', this.data)
 
     function handleChange(event, newValue) {
       Session.set('encounterPageTabIndex', newValue)
     }
 
     return (
-      <div id="encountersPage" style={{paddingLeft: '100px', paddingRight: '100px'}}>
+      <div id="encountersPage" style={{paddingLeft: '100px', paddingRight: '100px', paddingBottom: '100px'}}>
         <MuiThemeProvider theme={muiTheme} >
-          <Container>
-            <Card>
+          {/* <Container> */}
+            <StyledCard>
               <CardHeader
                 title="Encounters"
               />
               <CardContent>
 
-                    <Tabs value={this.data.tabIndex} onChange={handleChange} aria-label="simple tabs example">
-                      <Tab label="Directory" />
+                    <Tabs value={this.data.tabIndex} onChange={handleChange.bind(this)} aria-label="simple tabs example">
+                      <Tab label="History" />
                       <Tab label="New" />
                     </Tabs>
                     <TabPanel value={this.data.tabIndex} index={0}>
                       <EncountersTable 
                         hideIdentifier={true} 
+                        hideCheckboxes={true} 
                         hideSubjects={false}
                         noDataMessagePadding={100}
                         actionButtonLabel="Send"
-                        // encounters={ this.data.encounters }
-                        // paginationLimit={ this.data.pagnationLimit }
+                        encounters={ this.data.encounters }
+                        paginationLimit={10}
+                        hideSubjects={true}
+                        hideClassCode={false}
+                        hideReasonCode={false}
+                        hideReason={false}
+                        hideHistory={false}
                         // appWidth={ Session.get('appWidth') }
                         // onRowClick={ this.onTableRowClick }
                         // onCellClick={ this.onTableCellClick }
@@ -355,7 +370,7 @@ export class EncountersPage extends React.Component {
                         />
                     </TabPanel>
                     <TabPanel value={this.data.tabIndex} index={1}>
-                      <EncounterDetail 
+                      {/* <EncounterDetail 
                         id='newEncounter' 
                         displayDatePicker={true} 
                         displayBarcodes={false}
@@ -366,7 +381,7 @@ export class EncountersPage extends React.Component {
                         // onDelete={ this.onDeleteEncounter }
                         // onUpsert={ this.onUpsertEncounter }
                         // onCancel={ this.onCancelUpsertEncounter } 
-                        />
+                        /> */}
                     </TabPanel>
 
                 {/* <Tabs id="encountersPageTabs" default value={this.data.tabIndex} onChange={this.handleTabChange} initialSelectedIndex={1}>
@@ -420,16 +435,13 @@ export class EncountersPage extends React.Component {
                   </Tab>
                 </Tabs> */}
               </CardContent>
-            </Card>
-          </Container>
+            </StyledCard>
+          {/* </Container> */}
         </MuiThemeProvider>
       </div>
     );
   }
 }
 
-
-
 ReactMixin(EncountersPage.prototype, ReactMeteorData);
-
 export default EncountersPage;
