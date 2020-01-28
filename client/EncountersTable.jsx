@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+
+// import { logger } from 'winston';
 
 import { 
   CssBaseline,
@@ -15,7 +17,8 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  TablePagination,
 } from '@material-ui/core';
 
 import TableNoData from 'material-fhir-ui';
@@ -58,7 +61,7 @@ let styles = {
 }
 
 
-flattenEncounter = function(encounter){
+flattenEncounter = function(encounter, dateFormat){
   let result = {
     _id: '',
     meta: '',
@@ -72,22 +75,34 @@ flattenEncounter = function(encounter){
     reasonDisplay: '', 
     typeCode: '',
     typeDisplay: '',
-    classCode: ''
+    classCode: '',
+    duration: ''
   };
+
+  if(!dateFormat){
+    dateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
 
   result._id =  get(encounter, 'id') ? get(encounter, 'id') : get(encounter, '_id');
 
+  if(get(encounter, 'subject')){
+    if(get(encounter, 'subject.display', '')){
+      result.subject = get(encounter, 'subject.display', '');
+    } else {
+      result.subject = get(encounter, 'subject.reference', '');
+    }
+  }  
+  if(get(encounter, 'patient')){
+    if(get(encounter, 'patient.display', '')){
+      result.subject = get(encounter, 'patient.display', '');
+    } else {
+      result.subject = get(encounter, 'patient.reference', '');
+    }
+  }  
 
-  if(get(encounter, 'subject.display', '')){
-    result.subject = get(encounter, 'subject.display', '');
-  } else {
-    result.subject = get(encounter, 'subject.reference', '');
-  }
   result.subjectId = get(encounter, 'subject.reference', '');
 
   result.status = get(encounter, 'status', '');
-  result.periodStart = moment(get(encounter, 'period.start', '')).format("YYYY-MM-DD hh:mm");
-  result.periodEnd = moment(get(encounter, 'period.end', '')).format("YYYY-MM-DD hh:ss");
   result.reasonCode = get(encounter, 'reason[0].coding[0].code', '');
   result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
   result.typeCode = get(encounter, 'type[0].coding[0].code', '');
@@ -103,66 +118,50 @@ flattenEncounter = function(encounter){
 
   result.statusHistory = statusHistory.length;
 
+  let momentStart = moment(get(encounter, 'period.start', ''))
+  let momentEnd = moment(get(encounter, 'period.end', ''))
+
+  result.periodStart = momentStart.format(dateFormat);
+  result.periodEnd = momentEnd.format(dateFormat);
+
+  if(momentStart && momentEnd){
+    result.duration = Math.abs(momentStart.diff(momentEnd, 'minutes', true))
+  }
+
   return result;
 }
-
-
-// export class EncountersTable extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       selected: [],
-//       encounters: []
-//     }
-//   }
-//   getMeteorData() {
-
-//     // this should all be handled by props
-//     // or a mixin!
-//     let data = {
-//       style: {
-//         text: Glass.darkroom()
-//       },
-//       selected: [],
-//       encounters: []
-//     };
-
-//     if(props.data){
-//       console.log('props.data', props.data);
-
-//       if(props.data.length > 0){              
-//         props.data.forEach(function(encounter){
-//           data.encounters.push(flattenEncounter(encounter));
-//         });  
-//       }
-//     } else {
-//       let query = {};
-//       if(props.query){
-//         query = props.query
-//       }
-//       if(props.hideEnteredInError){
-//         query['verificationStatus'] = {
-//           $nin: ['entered-in-error']  // unconfirmed | provisional | differential | confirmed | refuted | entered-in-error
-//         }
-//       }
-
-//       data.encounters = Encounters.find(query).map(function(encounter){
-//         return flattenEncounter(encounter);
-//       });
-//     }
-
-//     if(process.env.NODE_ENV === "test") console.log("EncountersTable[data]", data);
-//     return data;
-//   }
 
 
 
 
 function EncountersTable(props){
-  console.log('EncountersTable.props', props);
-  // console.log('EncountersTable.props.encounters', props.encounters);
+  logger.info('Rendering the EncountersTable');
+  logger.verbose('clinical:hl7-resource-encounter.client.EncountersTable');
+  logger.data('EncountersTable.props', {data: props}, {source: "EncountersTable.jsx"});
+
+  let rows = [];
+  let rowsPerPageToRender = 5;
 
   const classes = useStyles();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  if(props.rowsPerPage){
+    // if we receive an override as a prop, render that many rows
+    // best to use rowsPerPage with disablePagination
+    rowsPerPageToRender = props.rowsPerPage;
+  } else {
+    // otherwise default to the user selection
+    rowsPerPageToRender = rowsPerPage;
+  }
+
+  let paginationCount = 101;
+  if(props.count){
+    paginationCount = props.count;
+  } else {
+    paginationCount = rows.length;
+  }
+
 
   function handleChange(row, key, value) {
     const source = this.state.source;
@@ -189,9 +188,15 @@ function EncountersTable(props){
     return "";
   }
   function rowClick(id){
+    // console.log('EncountersTable.rowClick', id);
+
     Session.set("selectedEncounterId", id);
     Session.set('encounterPageTabIndex', 1);
     Session.set('encounterDetailState', false);
+
+    if(props && (typeof props.onRowClick === "function")){
+      props.onRowClick(id);
+    }
   }
   function renderActionIconsHeader(){
     if (!props.hideActionIcons) {
@@ -217,6 +222,8 @@ function EncountersTable(props){
       );
     }
   } 
+
+
   function removeRecord(_id){
     console.log('Remove encounter ', _id)
     if(props.onRemoveRecord){
@@ -241,24 +248,31 @@ function EncountersTable(props){
     }
   }
   function renderBarcode(id){
-    if (!props.hideIdentifier) {
+    if (!props.hideBarcode) {
       return (
-        <TableCell><span className="barcode">{id}</span></TableCell>
+        <TableCell><span className="barcode helvetica">{id}</span></TableCell>
       );
     }
   }
   function renderBarcodeHeader(){
-    if (!props.hideIdentifier) {
+    if (!props.hideBarcode) {
       return (
         <TableCell>System ID</TableCell>
       );
     }
   }
-  function renderSubject(id){
+  function renderSubject(name, type){
     if (!props.hideSubjects) {
-      return (
-        <TableCell className='name'>{ id }</TableCell>
-      );
+      let result;
+      if(props.multiline){
+        result = <TableCell className='name'>
+          <span style={{color: 'grey', fontSize: '80%'}}>{ name }</span><br/>
+          <span style={{fontSize: '120%'}}>{ type }</span>
+        </TableCell>;
+      } else {
+        result = <TableCell className='name'>{ name }</TableCell>;
+      }
+      return (result);
     }
   }
   function renderSubjectHeader(){
@@ -278,7 +292,7 @@ function EncountersTable(props){
   function renderStatusHeader(){
     if (!props.hideStatus) {
       return (
-        <TableCell className='value'>Value</TableCell>
+        <TableCell className='value'>Status</TableCell>
       );
     }
   }
@@ -293,7 +307,7 @@ function EncountersTable(props){
   function renderHistoryHeader(){
     if (!props.hideHistory) {
       return (
-        <TableCell className='history'>Value</TableCell>
+        <TableCell className='history'>History</TableCell>
       );
     }
   }
@@ -309,6 +323,20 @@ function EncountersTable(props){
     if (!props.hideTypeCode) {
       return (
         <TableCell className='typecode'>{ code }</TableCell>
+      );  
+    }
+  }
+  function renderTypeHeader(){
+    if (!props.hideType) {
+      return (
+        <TableCell className='typeDisplay'>Type</TableCell>
+      );
+    }
+  }
+  function renderType(type){
+    if (!props.hideType) {
+      return (
+        <TableCell className='typeDisplay'>{ type }</TableCell>
       );  
     }
   }
@@ -355,14 +383,14 @@ function EncountersTable(props){
     }
   }
   function renderCategoryHeader(){
-    if (props.multiline === false) {
+    if (!props.hideCategory) {
       return (
         <TableCell className='category'>Category</TableCell>
       );
     }
   }
   function renderCategory(category){
-    if (props.multiline === false) {
+    if (!props.hideCategory) {
       return (
         <TableCell className='category'>{ category }</TableCell>
       );
@@ -386,112 +414,197 @@ function EncountersTable(props){
       );
     }
   }
+  function renderStartDateHeader(){
+    if (!props.hideStartDateTime) {
+      return (
+        <TableCell className='start' style={{minWidth: '140px'}}>Start</TableCell>
+      );
+    }
+  }
+  function renderStartDate(periodStart){
+    if (!props.hideStartDateTime) {
+      return (
+        <TableCell className='periodStart' style={{minWidth: '140px'}}>{ periodStart }</TableCell>
+      );
+    }
+  }
+  function renderEndDateHeader(){
+    if (!props.hideEndDateTime) {
+      return (
+        <TableCell className='end' style={{minWidth: '140px'}}>End</TableCell>
+      );
+    }
+  }
+  function renderEndDate(periodEnd){
+    if (!props.hideEndDateTime) {
+      return (
+        <TableCell className='periodEnd' style={{minWidth: '140px'}}>{ periodEnd }</TableCell>
+      );
+    }
+  }
+  function renderDurationHeader(){
+    if (!props.calculateDuration) {
+      return (
+        <TableCell className='duration'>Duration</TableCell>
+      );
+    }
+  }
+  function renderDuration(duration){
+    if (!props.calculateDuration) {
+      return (
+        <TableCell className='duration'>{ duration }</TableCell>
+      );  
+    }
+  }
+  function onActionButtonClick(id){
+    console.log('onActionButtonClick', id, props);
 
-
+    if(typeof props.onActionButtonClick === "function"){
+      props.onActionButtonClick(id);
+    }
+  }
+  function renderActionButtonHeader(){
+    if (props.showActionButton === true) {
+      return (
+        <TableCell className='ActionButton' >Action</TableCell>
+      );
+    }
+  }
+  function renderActionButton(patient){
+    if (props.showActionButton === true) {
+      return (
+        <TableCell className='ActionButton' >
+          <Button onClick={ onActionButtonClick.bind(this, patient[i]._id)}>{ get(props, "actionButtonLabel", "") }</Button>
+        </TableCell>
+      );
+    }
+  }
 
   let tableRows = [];
   let encountersToRender = [];
+  let proceduresToRender = [];
+  let dateFormat = "YYYY-MM-DD";
+
+  if(props.showMinutes){
+    dateFormat = "YYYY-MM-DD hh:mm";
+  }
+  if(props.dateFormat){
+    dateFormat = props.dateFormat;
+  }
+
   if(props.encounters){
-    if(props.encounters.length > 0){              
+    if(props.encounters.length > 0){     
+      let count = 0;    
       props.encounters.forEach(function(encounter){
-        encountersToRender.push(flattenEncounter(encounter));
+        if((count >= (page * rowsPerPageToRender)) && (count < (page + 1) * rowsPerPageToRender)){
+          encountersToRender.push(flattenEncounter(encounter, dateFormat));
+        }
+        count++;
       });  
     }
   }
 
   if(encountersToRender.length === 0){
-    console.log('No encounters to render');
+    logger.trace('EncountersTable:  No encounters to render.');
     // footer = <TableNoData noDataPadding={ props.noDataMessagePadding } />
   } else {
     for (var i = 0; i < encountersToRender.length; i++) {
       if(props.multiline){
         tableRows.push(
-          <TableRow className="encounterRow" key={i} onClick={ rowClick(encountersToRender[i]._id)} >
+          <TableRow className="encounterRow" key={i} onClick={ rowClick.bind(this, encountersToRender[i]._id)} style={{cursor: 'pointer'}} hover={true} >
             { renderToggle() }
             { renderActionIcons(encountersToRender[i]) }
-            { renderSubject(encountersToRender[i].subject)}
+            { renderSubject(encountersToRender[i].subject, encountersToRender[i].typeDisplay)}
             { renderClassCode(encountersToRender[i].classCode) }
             { renderTypeCode(encountersToRender[i].typeCode) }
-            {/* <TableCell className='classCode' >{encountersToRender[i].classCode }</TableCell> */}
-            {/* <TableCell className='typeCode' >{encountersToRender[i].typeCode }</TableCell> */}
-            <TableCell className='typeDisplay' >{encountersToRender[i].typeDisplay }</TableCell>
+            { renderType(encountersToRender[i].typeDisplay)}
             { renderReasonCode(encountersToRender[i].reasonCode)}
             { renderReason(encountersToRender[i].reasonDisplay)}
-            {/* <TableCell className='reasonCode' >{encountersToRender[i].reasonCode }</TableCell>
-            <TableCell className='reasonDisplay' >{encountersToRender[i].reasonDisplay }</TableCell> */}
-
             { renderStatus(encountersToRender[i].status)}
             { renderHistory(encountersToRender[i].statusHistory)}
-
-            {/* <TableCell className='status' >{encountersToRender[i].status }</TableCell>
-            <TableCell className='statusHistory' >{encountersToRender[i].statusHistory }</TableCell> */}
-            <TableCell className='periodStart' style={{minWidth: '140px'}}>{encountersToRender[i].periodStart }</TableCell>
-            <TableCell className='periodEnd' style={{minWidth: '140px'}}>{encountersToRender[i].periodEnd }</TableCell>
+            { renderStartDate(encountersToRender[i].periodStart)}
+            { renderEndDate(encountersToRender[i].periodEnd)}
+            { renderDuration(encountersToRender[i].duration)}
             { renderBarcode(encountersToRender[i]._id)}
+            { renderActionButton(encountersToRender[i]) }
           </TableRow>
         );    
-
       } else {
         tableRows.push(
-          <TableRow className="encounterRow" key={i} onClick={ rowClick.bind(encountersToRender[i]._id)} >            
+          <TableRow className="encounterRow" key={i} onClick={ rowClick.bind(this, encountersToRender[i]._id)} style={{cursor: 'pointer'}} hover={true} >            
             { renderToggle() }
             { renderActionIcons(encountersToRender[i]) }
             { renderSubject(encountersToRender[i].subject)}
             { renderClassCode(encountersToRender[i].classCode) }
             { renderTypeCode(encountersToRender[i].typeCode) }
-            {/* <TableCell className='classCode' >{ encountersToRender[i].classCode }</TableCell> */}
-            {/* <TableCell className='typeCode' >{ encountersToRender[i].typeCode }</TableCell> */}
-            <TableCell className='typeDisplay' >{ encountersToRender[i].typeDisplay }</TableCell>
+            { renderType(encountersToRender[i].typeDisplay)}
             { renderReasonCode(encountersToRender[i].reasonCode)}
             { renderReason(encountersToRender[i].reasonDisplay)}
-            {/* <TableCell className='reasonCode' >{ encountersToRender[i].reasonCode }</TableCell>
-            <TableCell className='reasonDisplay' >{ encountersToRender[i].reasonDisplay }</TableCell> */}
-
             { renderStatus(encountersToRender[i].status)}
             { renderHistory(encountersToRender[i].statusHistory)}
-
-            {/* <TableCell className='status' >{ encountersToRender[i].status }</TableCell>
-            <TableCell className='statusHistory' >{ encountersToRender[i].statusHistory }</TableCell> */}
-            <TableCell className='periodStart' style={{minWidth: '140px'}}>{ encountersToRender[i].periodStart }</TableCell>
-            <TableCell className='periodEnd' style={{minWidth: '140px'}}>{ encountersToRender[i].periodEnd }</TableCell>
+            { renderStartDate(encountersToRender[i].periodStart)}
+            { renderEndDate(encountersToRender[i].periodEnd)}
+            { renderDuration(encountersToRender[i].duration)}
             { renderBarcode(encountersToRender[i]._id)}
+            { renderActionButton(encountersToRender[i]) }
           </TableRow>
         );    
       }
     }
   }
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  let paginationFooter;
+  if(!props.disablePagination){
+    paginationFooter = <TablePagination
+      component="div"
+      rowsPerPageOptions={[5, 10, 25, 100]}
+      colSpan={3}
+      count={paginationCount}
+      rowsPerPage={rowsPerPageToRender}
+      page={page}
+      // SelectProps={{
+      //   inputProps: { 'aria-label': 'rows per page' },
+      //   native: true
+      // }}
+      onChangePage={handleChangePage}
+      //onChangeRowsPerPage={handleChangeRowsPerPage}
+      // ActionsComponent={TablePaginationActions}
+      style={{float: 'right', border: 'none'}}
+    />
+  }
+
   return(
-    <Table size="small" aria-label="a dense table">
-      <TableHead>
-        <TableRow>
-          { renderToggleHeader() }
-          { renderActionIconsHeader() }
-          { renderSubjectHeader() }
-          { renderClassCodeHeader() }
-          { renderTypeCodeHeader() }
-          {/* <TableCell className='classCode'>Class</TableCell> */}
-          {/* <TableCell className='typeCode'>TypeCode</TableCell> */}
-          <TableCell className='typeDisplay'>Type</TableCell>
-          { renderReasonCodeHeader() }
-          { renderReasonHeader() }
-          {/* <TableCell className='reasonCode'>ReasonCode</TableCell>
-          <TableCell className='reasonDisplay'>Reason</TableCell> */}
-
-          { renderStatusHeader() }
-          { renderHistoryHeader() }
-
-          {/* <TableCell className='status'>Status</TableCell>
-          <TableCell className='statusHistory'>History</TableCell> */}
-          <TableCell className='start' style={{minWidth: '140px'}}>Start</TableCell>
-          <TableCell className='end' style={{minWidth: '140px'}}>End</TableCell>
-          { renderBarcodeHeader() }
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        { tableRows }
-      </TableBody>
-    </Table>
+    <div>
+      <Table size="small" aria-label="a dense table">
+        <TableHead>
+          <TableRow>
+            { renderToggleHeader() }
+            { renderActionIconsHeader() }
+            { renderSubjectHeader() }
+            { renderClassCodeHeader() }
+            { renderTypeCodeHeader() }
+            { renderTypeHeader() } 
+            { renderReasonCodeHeader() }
+            { renderReasonHeader() }
+            { renderStatusHeader() }
+            { renderHistoryHeader() }
+            { renderStartDateHeader() }
+            { renderEndDateHeader() }
+            { renderDurationHeader() }
+            { renderBarcodeHeader() }
+            { renderActionButtonHeader() }
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          { tableRows }
+        </TableBody>
+      </Table>
+      { paginationFooter }
+    </div>
   );
 }
 
@@ -500,7 +613,11 @@ EncountersTable.propTypes = {
   encounters: PropTypes.array,
   query: PropTypes.object,
   paginationLimit: PropTypes.number,
+  disablePagination: PropTypes.bool,
+
+  hideCategory: PropTypes.bool,
   hideClassCode: PropTypes.bool,
+  hideType: PropTypes.bool,
   hideTypeCode: PropTypes.bool,
   hideReason: PropTypes.bool,
   hideReasonCode: PropTypes.bool,
@@ -510,6 +627,8 @@ EncountersTable.propTypes = {
   hideIdentifier: PropTypes.bool,
   hideStatus: PropTypes.bool,
   hideHistory: PropTypes.bool,
+  hideBarcode: PropTypes.bool,
+  calculateDuration: PropTypes.bool,
   enteredInError: PropTypes.bool,
   multiline: PropTypes.bool,
   onCellClick: PropTypes.func,
@@ -517,8 +636,22 @@ EncountersTable.propTypes = {
   onMetaClick: PropTypes.func,
   onRemoveRecord: PropTypes.func,
   onActionButtonClick: PropTypes.func,
-  actionButtonLabel: PropTypes.string
+  actionButtonLabel: PropTypes.string,
+  hideEndDateTime: PropTypes.bool,
+  hideStartDateTime: PropTypes.bool,
+
+  onActionButtonClick: PropTypes.func,
+  showActionButton: PropTypes.bool,
+  actionButtonLabel: PropTypes.string,
+
+  rowsPerPage: PropTypes.number,
+  dateFormat: PropTypes.string,
+  showMinutes: PropTypes.bool
 };
+
+EncountersTable.defaultProps = {
+  hideBarcode: true
+}
 
 
 export default EncountersTable; 

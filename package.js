@@ -1,6 +1,6 @@
 Package.describe({
   name: 'clinical:hl7-resource-encounter',
-  version: '2.0.5',
+  version: '2.1.0',
   summary: 'HL7 FHIR Resource - Encounter',
   git: 'https://github.com/clinical-meteor/hl7-resource-encounter',
   documentation: 'README.md'
@@ -13,7 +13,6 @@ Package.onUse(function (api) {
   api.use('mongo');
 
   api.use('aldeed:collection2@3.0.0');
-
   api.use('simple:json-routes@2.1.0');
   api.use('momentjs:moment@2.17.1');
   api.use('ecmascript@0.12.4');
@@ -51,7 +50,8 @@ Npm.depends({
   "moment": "2.22.2",
   "validator": "10.9.0",
   "lodash": "4.17.4",
-  "material-fhir-ui": "0.7.6",
+  "material-fhir-ui": "0.9.18",
   "react-icons": "3.8.0",
-  "styled-components": "4.4.1"
+  "styled-components": "4.4.1",
+  "winston": "3.2.1"
 });

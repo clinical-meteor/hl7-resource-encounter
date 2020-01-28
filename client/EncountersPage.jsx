@@ -22,11 +22,14 @@ import ReactMixin  from 'react-mixin';
 
 import EncounterDetail from './EncounterDetail';
 import EncountersTable from './EncountersTable';
-import StyledCard from './StyledCard';
+
+import { StyledCard, PageCanvas } from 'material-fhir-ui';
 
 import { get, cloneDeep } from 'lodash';
 
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+
+//=============================================================================================================================================
+// SESSION VARIABLES
 
 Session.setDefault('encounterPageTabIndex', 0);
 Session.setDefault('encounterSearchFilter', '');
@@ -34,7 +37,11 @@ Session.setDefault('selectedEncounterId', false);
 Session.setDefault('fhirVersion', 'v1.0.2');
 Session.setDefault('encountersArray', []);
 
-// Global Theming 
+//=============================================================================================================================================
+// GLOBAL THEMING
+
+  import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+
   // This is necessary for the Material UI component render layer
   let theme = {
     primaryColor: "rgb(108, 183, 110)",
@@ -103,16 +110,8 @@ Session.setDefault('encountersArray', []);
     }
   });
 
-// const StyledCard = styled(Card)`
-//   background: ` + theme.paperColor + `;
-//   border-radius: 3px;
-//   border: 0;
-//   color: ` + theme.paperTextColor + `;
-//   height: 48px;
-//   padding: 0 30px;
-//   box-shadow: 0 3px 5px 2px rgba(255, 105, 135, 0.3);
-// `;
-
+//=============================================================================================================================================
+// TABS
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -132,8 +131,6 @@ function TabPanel(props) {
 }
 
 
-
-
 export class EncountersPage extends React.Component {
   constructor(props) {
     super(props);
@@ -151,12 +148,15 @@ export class EncountersPage extends React.Component {
       selectedEncounter: false,
       selected: [],
       encounters: [],
+      encountersCount: 0,
       query: {},
-      options: {
-        limit: get(Meteor, 'settings.public.defaults.paginationLimit', 5)
-      },
+      options: {},
       tabIndex: Session.get('encounterPageTabIndex')
     };
+
+    // if(get(Meteor, 'settings.public.defaults.paginationLimit')){
+    //   data.options.limit = get(Meteor, 'settings.public.defaults.paginationLimit')
+    // }
 
     // if(Session.get('encountersTableQuery')){
     //   data.query = Session.get('encountersTableQuery')
@@ -176,13 +176,9 @@ export class EncountersPage extends React.Component {
     console.log('EncountersPage.data.options', data.options)
 
     data.encounters = Encounters.find(data.query, data.options).fetch();
+    data.encountersCount = Encounters.find(data.query, data.options).count();
 
-
-    // data.style = Glass.blur(data.style);
-    // data.style.appbar = Glass.darkroom(data.style.appbar);
-    // data.style.tab = Glass.darkroom(data.style.tab);
-
-    // console.log("EncountersPage[data]", data);
+    console.log("EncountersPage[data]", data);
     return data;
   }
 
@@ -199,7 +195,7 @@ export class EncountersPage extends React.Component {
     Session.set('selectedEncounterId', false);
   }
   onCancelUpsertEncounter(context){
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
   }
   onDeleteEncounter(context){
     Encounters._collection.remove({_id: get(context, 'state.encounterId')}, function(error, result){
@@ -213,7 +209,7 @@ export class EncountersPage extends React.Component {
         Bert.alert('Encounter removed!', 'success');
       }
     });
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
   }
   onUpsertEncounter(context){
     //if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
@@ -254,7 +250,7 @@ export class EncountersPage extends React.Component {
           if (result) {
             HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: context.state.encounterId});
             Session.set('selectedEncounterId', false);
-            Session.set('encounterPageTabIndex', 1);
+            Session.set('encounterPageTabIndex', 0);
             Bert.alert('Encounter added!', 'success');
           }
         });
@@ -270,14 +266,14 @@ export class EncountersPage extends React.Component {
           }
           if (result) {
             HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: context.state.encounterId});
-            Session.set('encounterPageTabIndex', 1);
+            Session.set('encounterPageTabIndex', 0);
             Session.set('selectedEncounterId', false);
             Bert.alert('Encounter added!', 'success');
           }
         });
       }
     } 
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
   }
   onTableRowClick(encounterId){
     Session.set('selectedEncounterId', encounterId);
@@ -310,21 +306,21 @@ export class EncountersPage extends React.Component {
   }
   onInsert(encounterId){
     Session.set('selectedEncounterId', false);
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
     HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: encounterId});
   }
   onUpdate(encounterId){
     Session.set('selectedEncounterId', false);
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
     HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: encounterId});
   }
   onRemove(encounterId){
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
     Session.set('selectedEncounterId', false);
     HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: encounterId});
   }
   onCancel(){
-    Session.set('encounterPageTabIndex', 1);
+    Session.set('encounterPageTabIndex', 0);
   } 
   render() {
     // console.log('EncountersPage.data', this.data)
@@ -333,56 +329,69 @@ export class EncountersPage extends React.Component {
       Session.set('encounterPageTabIndex', newValue)
     }
 
+    const rowsPerPage = get(Meteor, 'settings.public.defaults.rowsPerPage', 20);
+
+    let headerHeight = 64;
+    if(get(Meteor, 'settings.public.defaults.prominantHeader', false)){
+      headerHeight = 128;
+    }
+
+    let encountersCount = this.data.encounters.length;
+
     return (
-      <div id="encountersPage" style={{paddingLeft: '100px', paddingRight: '100px', paddingBottom: '100px'}}>
+      <PageCanvas id="encountersPage" headerHeight={headerHeight} >
         <MuiThemeProvider theme={muiTheme} >
           {/* <Container> */}
-            <StyledCard>
+            <StyledCard height="auto" scrollable={true} margin={20} headerHeight={headerHeight} >
               <CardHeader
-                title="Encounters"
+                title={ encountersCount + " Encounters"}
               />
               <CardContent>
 
-                    <Tabs value={this.data.tabIndex} onChange={handleChange.bind(this)} aria-label="simple tabs example">
-                      <Tab label="History" />
-                      <Tab label="New" />
-                    </Tabs>
-                    <TabPanel value={this.data.tabIndex} index={0}>
-                      <EncountersTable 
-                        hideIdentifier={true} 
-                        hideCheckboxes={true} 
-                        hideSubjects={false}
-                        noDataMessagePadding={100}
-                        actionButtonLabel="Send"
-                        encounters={ this.data.encounters }
-                        paginationLimit={10}
-                        hideSubjects={true}
-                        hideClassCode={false}
-                        hideReasonCode={false}
-                        hideReason={false}
-                        hideHistory={false}
-                        // appWidth={ Session.get('appWidth') }
-                        // onRowClick={ this.onTableRowClick }
-                        // onCellClick={ this.onTableCellClick }
-                        // onActionButtonClick={this.tableActionButtonClick}
-                        // onRemoveRecord={ this.onDeleteEncounter }
-                        // query={this.data.encountersTableQuery}
-                        />
-                    </TabPanel>
-                    <TabPanel value={this.data.tabIndex} index={1}>
-                      {/* <EncounterDetail 
-                        id='newEncounter' 
-                        displayDatePicker={true} 
-                        displayBarcodes={false}
-                        showHints={true}
-                        // onInsert={ this.onInsert }
-                        // encounter={ this.data.selectedEncounter }
-                        // encounterId={ this.data.selectedEncounterId } 
-                        // onDelete={ this.onDeleteEncounter }
-                        // onUpsert={ this.onUpsertEncounter }
-                        // onCancel={ this.onCancelUpsertEncounter } 
-                        /> */}
-                    </TabPanel>
+                    <div>
+                      <Tabs value={this.data.tabIndex} onChange={this.handleTabChange.bind(this)} aria-label="simple tabs example">
+                        <Tab label="History" value={0} />
+                        <Tab label="New" value={1} />
+                      </Tabs>
+                      <TabPanel >
+                        <EncountersTable 
+                          hideIdentifier={true} 
+                          hideCheckboxes={true} 
+                          hideSubjects={false}
+                          noDataMessagePadding={100}
+                          actionButtonLabel="Send"
+                          hideSubjects={false}
+                          hideClassCode={false}
+                          hideReasonCode={false}
+                          hideReason={false}
+                          hideHistory={false}
+                          encounters={ this.data.encounters }
+                          rowsPerPage={rowsPerPage}
+                          count={this.data.encountersCount}      
+                          showMinutes={true}
+                          // appWidth={ Session.get('appWidth') }
+                          // onRowClick={ this.onTableRowClick }
+                          // onCellClick={ this.onTableCellClick }
+                          // onActionButtonClick={this.tableActionButtonClick}
+                          // onRemoveRecord={ this.onDeleteEncounter }
+                          // query={this.data.encountersTableQuery}
+                          />
+                      </TabPanel>
+                      {/* <TabPanel >
+                        <EncounterDetail 
+                          id='newEncounter' 
+                          displayDatePicker={true} 
+                          displayBarcodes={false}
+                          showHints={true}
+                          // onInsert={ this.onInsert }
+                          // encounter={ this.data.selectedEncounter }
+                          // encounterId={ this.data.selectedEncounterId } 
+                          // onDelete={ this.onDeleteEncounter }
+                          // onUpsert={ this.onUpsertEncounter }
+                          // onCancel={ this.onCancelUpsertEncounter } 
+                          />
+                      </TabPanel> */}
+                    </div>
 
                 {/* <Tabs id="encountersPageTabs" default value={this.data.tabIndex} onChange={this.handleTabChange} initialSelectedIndex={1}>
                   <Tab className="newEncounterTab" label='New' style={this.data.style.tab} onActive={ this.onNewTab } value={0} >
@@ -438,7 +447,7 @@ export class EncountersPage extends React.Component {
             </StyledCard>
           {/* </Container> */}
         </MuiThemeProvider>
-      </div>
+      </PageCanvas>
     );
   }
 }
