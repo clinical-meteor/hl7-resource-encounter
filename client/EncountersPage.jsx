@@ -201,12 +201,12 @@ export class EncountersPage extends React.Component {
     Encounters._collection.remove({_id: get(context, 'state.encounterId')}, function(error, result){
       if (error) {
         if(process.env.NODE_ENV === "test") console.log('Encounters.insert[error]', error);
-        Bert.alert(error.reason, 'danger');
+        // Bert.alert(error.reason, 'danger');
       }
       if (result) {
         Session.set('selectedEncounterId', false);
         HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: context.state.encounterId});
-        Bert.alert('Encounter removed!', 'success');
+        // Bert.alert('Encounter removed!', 'success');
       }
     });
     Session.set('encounterPageTabIndex', 0);
@@ -245,13 +245,13 @@ export class EncountersPage extends React.Component {
         Encounters._collection.update({_id: get(context, 'state.encounterId')}, {$set: fhirEncounterData }, function(error, result){
           if (error) {
             if(process.env.NODE_ENV === "test") console.log("Encounters.insert[error]", error);
-            Bert.alert(error.reason, 'danger');
+            // Bert.alert(error.reason, 'danger');
           }
           if (result) {
             HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: context.state.encounterId});
             Session.set('selectedEncounterId', false);
             Session.set('encounterPageTabIndex', 0);
-            Bert.alert('Encounter added!', 'success');
+            // Bert.alert('Encounter added!', 'success');
           }
         });
       } else {
@@ -262,13 +262,13 @@ export class EncountersPage extends React.Component {
         Encounters._collection.insert(fhirEncounterData, function(error, result) {
           if (error) {
             if(process.env.NODE_ENV === "test")  console.log('Encounters.insert[error]', error);
-            Bert.alert(error.reason, 'danger');
+            // Bert.alert(error.reason, 'danger');
           }
           if (result) {
             HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Encounters", recordId: context.state.encounterId});
             Session.set('encounterPageTabIndex', 0);
             Session.set('selectedEncounterId', false);
-            Bert.alert('Encounter added!', 'success');
+            // Bert.alert('Encounter added!', 'success');
           }
         });
       }

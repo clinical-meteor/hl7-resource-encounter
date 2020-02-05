@@ -1,7 +1,3 @@
-// import { CardActions, CardText } from 'material-ui/Card';
-// import RaisedButton from 'material-ui/RaisedButton';
-// import DatePicker from 'material-ui/DatePicker';
-// import TextField from 'material-ui/TextField';
 
 import { 
   CssBaseline,
@@ -21,15 +17,11 @@ import {
   Box
 } from '@material-ui/core';
 
-// import { GlassCard, VerticalCanvas, Glass, DynamicSpacer } from 'meteor/clinical:glass-ui';
-import { Row, Col } from 'react-bootstrap';
-
 import React from 'react';
 import { ReactMeteorData } from 'meteor/react-meteor-data';
 import ReactMixin from 'react-mixin';
 import PropTypes from 'prop-types';
 
-import { Meteor } from 'meteor/meteor';
 
 import { get, set } from 'lodash';
 // import { setFlagsFromString } from 'v8';
