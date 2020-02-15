@@ -1,6 +1,6 @@
 Package.describe({
   name: 'clinical:hl7-resource-encounter',
-  version: '2.1.1',
+  version: '2.1.4',
   summary: 'HL7 FHIR Resource - Encounter',
   git: 'https://github.com/clinical-meteor/hl7-resource-encounter',
   documentation: 'README.md'
@@ -28,7 +28,6 @@ Package.onUse(function (api) {
   //   api.use('clinical:fhir-vault-server@0.0.3', ['client', 'server'], {weak: true});
   // }
 
-
   api.use('clinical:extended-api@2.5.0');
   api.use('matb33:collection-hooks@0.7.15');
   
@@ -49,7 +48,7 @@ Npm.depends({
   "moment": "2.22.2",
   "validator": "10.9.0",
   "lodash": "4.17.13",
-  "material-fhir-ui": "0.9.19",
-  "react-icons": "3.8.0",
+  "material-fhir-ui": "0.9.26",
+  "react-icons-kit": "1.3.1",
   "winston": "3.2.1"
 });

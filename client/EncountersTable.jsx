@@ -4,15 +4,6 @@ import PropTypes from 'prop-types';
 // import { logger } from 'winston';
 
 import { 
-  CssBaseline,
-  Grid, 
-  Container,
-  Divider,
-  Card,
-  CardHeader,
-  CardContent,
-  Tab, 
-  Tabs,
   Table,
   TableBody,
   TableCell,
@@ -28,8 +19,14 @@ import _ from 'lodash';
 let get = _.get;
 let set = _.set;
 
-import { FaTags, FaCode, FaPuzzlePiece, FaLock  } from 'react-icons/fa';
-import { GoTrashcan } from 'react-icons/go';
+// import { FaTags, FaCode, FaPuzzlePiece, FaLock  } from 'react-icons/fa';
+// import { GoTrashcan } from 'react-icons/go';
+
+import Icon from 'react-icons-kit'
+import {tag} from 'react-icons-kit/fa/tag'
+import {trashO} from 'react-icons-kit/fa/trashO'
+
+
 
 import { ThemeProvider, makeStyles } from '@material-ui/styles';
 const useStyles = makeStyles(theme => ({
@@ -216,8 +213,8 @@ function EncountersTable(props){
 
       return (
         <TableCell className='actionIcons' style={{minWidth: '120px'}}>
-          <FaTags style={iconStyle} onClick={ onMetaClick.bind(encounter)} />
-          <GoTrashcan style={iconStyle} onClick={ removeRecord.bind(encounter._id)} />  
+          <Icon icon={tag} style={iconStyle} onClick={ onMetaClick.bind(encounter)}  />
+          <Icon icon={trashO} style={iconStyle} onClick={ removeRecord.bind(encounter._id)} />
         </TableCell>
       );
     }

@@ -3,7 +3,6 @@ import React from 'react';
 import EncountersPage from './client/EncountersPage';
 import EncountersTable from './client/EncountersTable';
 import EncounterDetail from './client/EncounterDetail';
-import { Encounter, Encounters, EncounterSchema } from './lib/Encounters';
 
 import { FaHospitalAlt } from 'react-icons/fa';
 
